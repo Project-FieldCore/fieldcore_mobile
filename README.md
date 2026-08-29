@@ -1,4 +1,4 @@
-# FieldOps — Mobile
+# FielCore — Mobile
 
 Aplicativo mobile da plataforma **FieldCore**, destinado aos técnicos de campo para execução de inspeções técnicas, com suporte a operação offline e sincronização com o servidor.
 
@@ -8,7 +8,7 @@ Este repositório contém a aplicação mobile construída com **Expo + React Na
 
 ## 📱 Sobre o produto
 
-O FieldOps substitui formulários impressos, planilhas e mensagens por um fluxo digital integrado de inspeções em campo. Neste app, o técnico consulta as inspeções atribuídas, identifica equipamentos por QR Code, responde checklists dinâmicos, registra evidências (fotos), localização e não conformidades — inclusive em locais sem conexão com a internet.
+O FieldCoregit  substitui formulários impressos, planilhas e mensagens por um fluxo digital integrado de inspeções em campo. Neste app, o técnico consulta as inspeções atribuídas, identifica equipamentos por QR Code, responde checklists dinâmicos, registra evidências (fotos), localização e não conformidades — inclusive em locais sem conexão com a internet.
 
 ---
 
@@ -75,13 +75,13 @@ src/
 - npm ou yarn
 - Expo CLI (`npm install -g expo-cli`) ou uso via `npx`
 - Android Studio (emulador) ou dispositivo físico Android com Expo Go / build de desenvolvimento
-- API do FieldOps rodando localmente ou apontada para o ambiente de integração (ver repositório da API)
+- API do FieldCore rodando localmente ou apontada para o ambiente de integração (ver repositório da API)
 
 ### Instalação
 
 ```bash
 git clone <url-do-repositorio>
-cd fieldops-mobile
+cd fieldcore-mobile
 npm install
 ```
 
