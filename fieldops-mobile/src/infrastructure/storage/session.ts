@@ -1,15 +1,74 @@
 import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
 
-const SESSION_TOKEN_KEY = 'fieldops.session.token';
+const SESSION_KEY = 'fieldops.session';
+
+export type Session = {
+  accessToken: string;
+  refreshToken: string;
+};
 
 export async function getSessionToken(): Promise<string | null> {
-  return SecureStore.getItemAsync(SESSION_TOKEN_KEY);
+  const session = await getSession();
+  return session?.accessToken ?? null;
 }
 
 export async function setSessionToken(token: string): Promise<void> {
-  await SecureStore.setItemAsync(SESSION_TOKEN_KEY, token);
+  await setSession({ accessToken: token, refreshToken: '' });
 }
 
 export async function clearSessionToken(): Promise<void> {
-  await SecureStore.deleteItemAsync(SESSION_TOKEN_KEY);
+  await clearSession();
+}
+
+export async function getSession(): Promise<Session | null> {
+  const serializedSession = await getItem(SESSION_KEY);
+
+  if (!serializedSession) {
+    return null;
+  }
+
+  try {
+    const session = JSON.parse(serializedSession) as Partial<Session>;
+    return typeof session.accessToken === 'string' && typeof session.refreshToken === 'string'
+      ? { accessToken: session.accessToken, refreshToken: session.refreshToken }
+      : null;
+  } catch {
+    await deleteItem(SESSION_KEY);
+    return null;
+  }
+}
+
+export async function setSession(session: Session): Promise<void> {
+  await setItem(SESSION_KEY, JSON.stringify(session));
+}
+
+export async function clearSession(): Promise<void> {
+  await deleteItem(SESSION_KEY);
+}
+
+async function getItem(key: string): Promise<string | null> {
+  if (Platform.OS === 'web') {
+    return globalThis.localStorage?.getItem(key) ?? null;
+  }
+
+  return SecureStore.getItemAsync(key);
+}
+
+async function setItem(key: string, value: string): Promise<void> {
+  if (Platform.OS === 'web') {
+    globalThis.localStorage?.setItem(key, value);
+    return;
+  }
+
+  await SecureStore.setItemAsync(key, value);
+}
+
+async function deleteItem(key: string): Promise<void> {
+  if (Platform.OS === 'web') {
+    globalThis.localStorage?.removeItem(key);
+    return;
+  }
+
+  await SecureStore.deleteItemAsync(key);
 }

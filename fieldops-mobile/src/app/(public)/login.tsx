@@ -1,7 +1,9 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
+import { Controller, useForm } from 'react-hook-form';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, Text, View } from 'react-native';
+import { z } from 'zod';
 
 import {
   BrandLogo,
@@ -12,21 +14,57 @@ import {
   TextField,
   typography,
 } from '@/design-system';
+import { ApiError } from '@/infrastructure/api/client';
+import { useAuthStore } from '@/features/auth/store';
+
+const loginSchema = z.object({
+  email: z.string().trim().email('Informe um e-mail válido.'),
+  password: z.string().min(1, 'Informe sua senha.'),
+});
+
+type LoginForm = z.infer<typeof loginSchema>;
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const signIn = useAuthStore((state) => state.signIn);
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    setError,
+  } = useForm<LoginForm>({ defaultValues: { email: '', password: '' } });
 
-  const handleSubmit = () => {
-    if (!email || !password) {
-      setErrorMessage('Preencha e-mail e senha para continuar.');
+  const onSubmit = async (values: LoginForm) => {
+    const parsed = loginSchema.safeParse(values);
+    if (!parsed.success) {
+      for (const issue of parsed.error.issues) {
+        const field = issue.path[0];
+        if (field === 'email' || field === 'password') {
+          setError(field, { message: issue.message });
+        }
+      }
       return;
     }
 
     setErrorMessage(null);
-    // Navegação de demonstração; substituir por login real (API + Secure Store) na Sprint 2
-    router.replace('/home');
+    try {
+      await signIn(parsed.data.email, parsed.data.password);
+      router.replace('/home');
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        setErrorMessage('E-mail ou senha inválidos. Verifique seus dados e tente novamente.');
+        return;
+      }
+
+      if (error instanceof ApiError && error.status === 403) {
+        setErrorMessage('Não foi possível acessar sua conta. Procure o administrador responsável.');
+        return;
+      }
+
+      setErrorMessage(
+        error instanceof Error ? error.message : 'Não foi possível entrar. Tente novamente.',
+      );
+    }
   };
 
   return (
@@ -52,27 +90,45 @@ export default function LoginScreen() {
           ) : null}
 
           <View style={styles.form}>
-            <TextField
-              icon="mail-outline"
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              keyboardType="email-address"
-              placeholder="E-mail"
+            <Controller
+              control={control}
+              name="email"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <TextField
+                  icon="mail-outline"
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  autoCapitalize="none"
+                  autoComplete="email"
+                  keyboardType="email-address"
+                  placeholder="E-mail"
+                  errorMessage={errors.email?.message}
+                />
+              )}
             />
-            <TextField
-              icon="lock-closed-outline"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              placeholder="Senha"
+            <Controller
+              control={control}
+              name="password"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <TextField
+                  icon="lock-closed-outline"
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  secureTextEntry
+                  autoComplete="current-password"
+                  placeholder="Senha"
+                  errorMessage={errors.password?.message}
+                />
+              )}
             />
 
             <Text style={styles.forgotPasswordLink} onPress={() => router.push('/forgot-password')}>
               Esqueceu a senha?
             </Text>
 
-            <Button label="Entrar" onPress={handleSubmit} />
+            <Button label="Entrar" onPress={handleSubmit(onSubmit)} loading={isSubmitting} />
           </View>
 
           <Text style={styles.backLink} onPress={() => router.back()}>

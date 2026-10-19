@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 
 import {
@@ -17,10 +17,10 @@ import {
 const ENTRANCE_OFFSET = 18;
 
 export default function WelcomeScreen() {
-  const logoAnim = useRef(new Animated.Value(0)).current;
-  const taglineAnim = useRef(new Animated.Value(0)).current;
-  const actionsAnim = useRef(new Animated.Value(0)).current;
-  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const [logoAnim] = useState(() => new Animated.Value(0));
+  const [taglineAnim] = useState(() => new Animated.Value(0));
+  const [actionsAnim] = useState(() => new Animated.Value(0));
+  const [pulseAnim] = useState(() => new Animated.Value(1));
 
   useEffect(() => {
     Animated.stagger(160, [

@@ -1,13 +1,14 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { Animated, StyleSheet } from 'react-native';
 
 import { BrandLogo, gradients } from '@/design-system';
-import { getSessionToken } from '@/infrastructure/storage/session';
+import { useAuthStore } from '@/features/auth/store';
 
 export default function SplashScreen() {
-  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const [pulseAnim] = useState(() => new Animated.Value(1));
+  const status = useAuthStore((state) => state.status);
 
   useEffect(() => {
     Animated.loop(
@@ -17,14 +18,10 @@ export default function SplashScreen() {
       ]),
     ).start();
 
-    getSessionToken()
-      .then((token) => {
-        router.replace(token ? '/home' : '/welcome');
-      })
-      .catch(() => {
-        router.replace('/welcome');
-      });
-  }, [pulseAnim]);
+    if (status !== 'loading') {
+      router.replace(status === 'authenticated' ? '/home' : '/welcome');
+    }
+  }, [pulseAnim, status]);
 
   return (
     <LinearGradient
