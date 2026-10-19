@@ -1,25 +1,26 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { router } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useEffect, useMemo, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { colors, spacing, typography } from '@/design-system';
+import { Card, colors, EmptyState, ErrorState, LoadingState, radius, spacing, typography } from '@/design-system';
+import { listInspections, type Inspection, type InspectionPriority, type InspectionStatus } from '@/features/inspections/mockRepository';
+
+type StatusFilter = 'ALL' | InspectionStatus;
+type PriorityFilter = 'ALL' | InspectionPriority;
+const statusFilters: { value: StatusFilter; label: string }[] = [{ value: 'ALL', label: 'Todas' }, { value: 'ASSIGNED', label: 'Atribuídas' }, { value: 'IN_PROGRESS', label: 'Em andamento' }, { value: 'SUBMITTED', label: 'Enviadas' }];
+const priorityFilters: { value: PriorityFilter; label: string }[] = [{ value: 'ALL', label: 'Todas prioridades' }, { value: 'HIGH', label: 'Alta' }, { value: 'MEDIUM', label: 'Média' }, { value: 'LOW', label: 'Baixa' }];
 
 export default function InspectionsScreen() {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Inspeções</Text>
-    </View>
-  );
+  const [inspections, setInspections] = useState<Inspection[]>([]); const [loading, setLoading] = useState(true); const [error, setError] = useState(false); const [status, setStatus] = useState<StatusFilter>('ALL'); const [priority, setPriority] = useState<PriorityFilter>('ALL');
+  const load = () => { setLoading(true); setError(false); listInspections().then(setInspections).catch(() => setError(true)).finally(() => setLoading(false)); };
+  useEffect(() => { const timer = setTimeout(load, 0); return () => clearTimeout(timer); }, []);
+  const filtered = useMemo(() => inspections.filter((item) => (status === 'ALL' || item.status === status) && (priority === 'ALL' || item.priority === priority)), [inspections, priority, status]);
+  if (loading) return <LoadingState title="Carregando inspeções..." />;
+  if (error) return <ErrorState title="Não foi possível carregar as inspeções" onRetry={load} />;
+  return <View style={styles.container}><LinearGradient colors={[colors.navy, colors.green]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.header}><Text style={styles.title}>Inspeções</Text><Text style={styles.subtitle}>Acompanhe suas atividades atribuídas</Text></LinearGradient><Text style={styles.filterLabel}>Status</Text><View style={styles.filters}>{statusFilters.map((filter) => <FilterChip key={filter.value} label={filter.label} selected={status === filter.value} onPress={() => setStatus(filter.value)} />)}</View><Text style={styles.filterLabel}>Prioridade</Text><View style={styles.priorityFilters}>{priorityFilters.map((filter) => <FilterChip key={filter.value} label={filter.label} selected={priority === filter.value} onPress={() => setPriority(filter.value)} />)}</View>{filtered.length === 0 ? <EmptyState title="Nenhuma inspeção encontrada" description="Altere os filtros para ver outras inspeções." /> : <ScrollView contentContainerStyle={styles.list}>{filtered.map((inspection) => <InspectionCard key={inspection.id} inspection={inspection} />)}</ScrollView>}</View>;
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-  },
-  title: {
-    ...typography.title,
-    color: colors.text,
-  },
-});
+function FilterChip({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) { return <Pressable onPress={onPress} style={[styles.chip, selected && styles.chipSelected]}><Text style={[styles.chipText, selected && styles.chipTextSelected]}>{label}</Text></Pressable>; }
+function InspectionCard({ inspection }: { inspection: Inspection }) { return <Pressable onPress={() => router.push(`/inspections/${inspection.id}`)}><Card style={styles.card}><View style={styles.cardHeader}><Text style={styles.client}>{inspection.client}</Text><Text style={[styles.priority, { color: priorityColor[inspection.priority] }]}>{priorityLabel[inspection.priority]}</Text></View><Text style={styles.equipment}>{inspection.equipment}</Text><Text style={styles.meta}>{inspection.site} · {inspection.scheduledAt}</Text><Text style={styles.status}>{statusLabel[inspection.status]}</Text></Card></Pressable>; }
+const priorityColor = { HIGH: colors.danger, MEDIUM: '#B7791F', LOW: colors.success }; const priorityLabel = { HIGH: 'Alta', MEDIUM: 'Média', LOW: 'Baixa' }; const statusLabel = { ASSIGNED: 'Atribuída', IN_PROGRESS: 'Em andamento', SUBMITTED: 'Enviada', PENDING_SYNC: 'Aguardando sincronização' };
+const styles = StyleSheet.create({ container: { flex: 1, backgroundColor: colors.background }, header: { paddingHorizontal: spacing.lg, paddingTop: spacing.xl, paddingBottom: spacing.lg, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 }, title: { ...typography.title, color: colors.textOnDark }, subtitle: { ...typography.body, color: colors.textOnDark, opacity: 0.85, marginTop: spacing.xs }, filterLabel: { ...typography.caption, color: colors.textMuted, marginTop: spacing.md, paddingHorizontal: spacing.lg }, filters: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, paddingHorizontal: spacing.lg, paddingTop: spacing.sm }, priorityFilters: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, paddingHorizontal: spacing.lg, paddingTop: spacing.sm, paddingBottom: spacing.md }, chip: { height: 38, justifyContent: 'center', paddingHorizontal: spacing.md, borderRadius: radius.pill, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }, chipSelected: { backgroundColor: colors.navy, borderColor: colors.navy }, chipText: { ...typography.caption, color: colors.textMuted }, chipTextSelected: { color: colors.textOnDark }, list: { padding: spacing.lg, paddingTop: 0, gap: spacing.sm }, card: { gap: spacing.xs }, cardHeader: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.sm }, client: { ...typography.subtitle, color: colors.text, flexShrink: 1 }, priority: { ...typography.caption, fontWeight: '700' }, equipment: { ...typography.body, color: colors.textMuted }, meta: { ...typography.caption, color: colors.textMuted }, status: { ...typography.caption, color: colors.navy, marginTop: spacing.xs } });
