@@ -18,6 +18,8 @@ export default function ProtectedLayout() {
       <Tabs.Screen name="inspections/[id]" options={{ href: null }} />
       <Tabs.Screen name="inspections/[id]/checklist" options={{ href: null }} />
       <Tabs.Screen name="inspections/[id]/summary" options={{ href: null }} />
+      <Tabs.Screen name="inspections/[id]/scanner" options={{ href: null }} />
+      <Tabs.Screen name="inspections/[id]/evidence" options={{ href: null }} />
       <Tabs.Screen name="synchronization/index" options={{ title: 'Sincronização' }} />
     </Tabs>
     </RouteGuard>

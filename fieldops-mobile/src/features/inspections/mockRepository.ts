@@ -1,3 +1,5 @@
+import { enqueueInspectionForSync } from './draftStore';
+
 export type InspectionStatus = 'ASSIGNED' | 'IN_PROGRESS' | 'SUBMITTED' | 'PENDING_SYNC';
 export type InspectionPriority = 'HIGH' | 'MEDIUM' | 'LOW';
 
@@ -33,7 +35,10 @@ export async function getInspection(id: string): Promise<Inspection | null> {
 
 export async function completeInspection(id: string): Promise<void> {
   const inspection = inspections.find((item) => item.id === id);
-  if (inspection) inspection.status = 'PENDING_SYNC';
+  if (inspection) {
+    inspection.status = 'PENDING_SYNC';
+    await enqueueInspectionForSync(id);
+  }
 }
 
 export function getPendingSyncCount(): number {

@@ -25,6 +25,19 @@
     "plugins": [
       "expo-router",
       "expo-secure-store",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Permita que o FieldOps use a câmera para identificar equipamentos.",
+          "barcodeScannerEnabled": true
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Permita que o FieldOps registre sua localização ao iniciar a inspeção."
+        }
+      ],
       "expo-status-bar"
     ],
     "experiments": {
